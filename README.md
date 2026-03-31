@@ -63,18 +63,14 @@ swarm --help
 ## Getting Started
 
 ```bash
-# Set up workspace
-swarm setup workspace
+# 1) Install
+swarm install
 
-# Set up a project
-cd your-project
-swarm setup project
+# 2) Set up workspace
+swarm setup workspace <name>
 
-# Create a task
-swarm task create "Build authentication module"
-
-# Run a task flow
-swarm task run <task-id>
+# 3) Run a task flow
+swarm task run <task-description>
 ```
 
 ## Uninstall
