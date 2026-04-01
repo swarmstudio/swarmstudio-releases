@@ -67,7 +67,7 @@ swarm --help
 swarm install
 
 # 2) Set up workspace
-swarm setup workspace <name>
+swarm workspace setup <name>
 
 # 3) Run a task flow
 swarm task run <task-description>
