@@ -18,6 +18,14 @@ REPO="swarmstudio/swarmstudio-releases"
 INSTALL_PREFIX="/usr/local"
 VERSION=""
 NO_CONFIRM=false
+TMP_DIR=""
+
+cleanup() {
+    if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
+        rm -rf "$TMP_DIR"
+    fi
+}
+trap cleanup EXIT
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -83,7 +91,7 @@ resolve_version() {
     fi
 
     # Get latest release tag from GitHub API
-    local latest
+    local latest=""
     if command -v gh &>/dev/null; then
         latest=$(gh release view --repo "$REPO" --json tagName -q '.tagName' 2>/dev/null || true)
     fi
@@ -108,7 +116,7 @@ resolve_version() {
 # Download and install
 # ---------------------------------------------------------------------------
 install() {
-    local platform version asset_name download_url tmp_dir
+    local platform version asset_name download_url
 
     platform="$(detect_platform)"
     version="$(resolve_version)"
@@ -149,32 +157,31 @@ install() {
     fi
 
     # Download
-    tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "$tmp_dir"' EXIT
+    TMP_DIR="$(mktemp -d)"
 
     echo "Downloading ${asset_name}..."
     if command -v gh &>/dev/null; then
         gh release download "$version" \
             --repo "$REPO" \
             --pattern "$asset_name" \
-            --dir "$tmp_dir" 2>/dev/null \
-        || curl -fSL "$download_url" -o "${tmp_dir}/${asset_name}"
+            --dir "$TMP_DIR" 2>/dev/null \
+        || curl -fSL "$download_url" -o "${TMP_DIR}/${asset_name}"
     else
-        curl -fSL "$download_url" -o "${tmp_dir}/${asset_name}"
+        curl -fSL "$download_url" -o "${TMP_DIR}/${asset_name}"
     fi
 
     # Extract
     echo "Extracting..."
-    tar -xzf "${tmp_dir}/${asset_name}" -C "$tmp_dir"
+    tar -xzf "${TMP_DIR}/${asset_name}" -C "$TMP_DIR"
 
     # Find the extracted swarm directory
-    local swarm_dir="${tmp_dir}/swarmstudio-cli-${ver_num}-${platform}/swarm"
+    local swarm_dir="${TMP_DIR}/swarmstudio-cli-${ver_num}-${platform}/swarm"
     if [ ! -d "$swarm_dir" ]; then
         # Try alternative layout
-        swarm_dir=$(find "$tmp_dir" -name "swarm" -type d | head -1)
+        swarm_dir=$(find "$TMP_DIR" -name "swarm" -type d | head -1)
     fi
 
-    if [ ! -f "${swarm_dir}/swarm" ]; then
+    if [ -z "$swarm_dir" ] || [ ! -f "${swarm_dir}/swarm" ]; then
         echo "Error: Could not find swarm binary in downloaded archive." >&2
         exit 1
     fi
@@ -195,12 +202,10 @@ install() {
     echo ""
     echo "Successfully installed SwarmStudio CLI ${version}!"
     echo ""
-    echo "  Run:  swarm --help"
-    echo ""
 
-    # Verify
+    # Run swarm --help to verify and warm up first-run initialization
     if command -v swarm &>/dev/null; then
-        swarm --version
+        swarm --help
     else
         echo "Note: ${INSTALL_PREFIX}/bin may not be in your PATH."
         echo "Add it with: export PATH=\"${INSTALL_PREFIX}/bin:\$PATH\""
