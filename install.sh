@@ -200,10 +200,10 @@ install() {
     $SUDO ln -sf "${target_dir}/swarm" "${INSTALL_PREFIX}/bin/swarm"
 
     echo ""
-    echo "Successfully installed SwarmStudio CLI ${version}!"
+    echo "Unpacking SwarmStudio CLI..."
     echo ""
 
-    # Run swarm --help to verify and warm up first-run initialization
+    # Run swarm --help to unpack/warm up and show available commands
     if command -v swarm &>/dev/null; then
         swarm --help
     else
