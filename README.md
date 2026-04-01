@@ -66,8 +66,12 @@ swarm --help
 # 1) Install
 swarm install
 
-# 2) Set up workspace
-swarm workspace setup <name>
+# 2.a) Create new workspace
+swarm workspace create <name>
+
+# 2.b) List and use existing workspace
+swarm workspace list
+swarm workspace use <id-or-slug>
 
 # 3) Run a task flow
 swarm task run <task-description>
